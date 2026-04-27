@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var hotkeys: HotKeyManager
+    @StateObject private var launchAtLogin = LaunchAtLogin()
 
     @AppStorage("workMinutes") private var workMinutes: Int = 25
     @AppStorage("breakMinutes") private var breakMinutes: Int = 5
@@ -32,6 +33,19 @@ struct SettingsView: View {
             }
 
             Section {
+                Toggle("Launch at login", isOn: Binding(
+                    get: { launchAtLogin.isEnabled },
+                    set: { launchAtLogin.setEnabled($0) }
+                ))
+            } header: {
+                Text("Startup")
+            } footer: {
+                Text("Tock will start automatically when you log in to your Mac.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
                 LabeledContent("Start / Pause") {
                     ShortcutRecorder(
                         keyCode: $hotkeyKeyCode,
@@ -57,6 +71,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 400)
+        .frame(width: 420, height: 480)
+        .onAppear { launchAtLogin.refresh() }
     }
 }

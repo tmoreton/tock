@@ -28,7 +28,9 @@ struct MenuBarView: View {
             Divider()
 
             HStack {
-                SettingsLink {
+                Button {
+                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                } label: {
                     Label("Settings…", systemImage: "gearshape")
                 }
                 .buttonStyle(.borderless)

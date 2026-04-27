@@ -35,7 +35,7 @@ final class HotKeyManager: ObservableObject {
             eventKind: UInt32(kEventHotKeyPressed)
         )
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
-        InstallEventHandler(
+        let status = InstallEventHandler(
             GetApplicationEventTarget(),
             hotKeyEventHandler,
             1,
@@ -43,11 +43,14 @@ final class HotKeyManager: ObservableObject {
             selfPtr,
             &eventHandler
         )
+        if status != noErr {
+            NSLog("HotKeyManager: InstallEventHandler failed (\(status))")
+        }
     }
 
     private func registerHotKey(keyCode: UInt32, modifiers: UInt32) {
-        let hotKeyID = EventHotKeyID(signature: OSType(0x706F6D6F), id: 1)
-        RegisterEventHotKey(
+        let hotKeyID = EventHotKeyID(signature: OSType(0x746F636B), id: 1) // 'tock'
+        let status = RegisterEventHotKey(
             keyCode,
             modifiers,
             hotKeyID,
@@ -55,6 +58,9 @@ final class HotKeyManager: ObservableObject {
             0,
             &hotKeyRef
         )
+        if status != noErr {
+            NSLog("HotKeyManager: RegisterEventHotKey failed (\(status)) for keyCode=\(keyCode) modifiers=\(modifiers)")
+        }
     }
 
     private func unregisterHotKey() {
