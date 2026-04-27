@@ -143,8 +143,9 @@ if [[ "$PUBLISH" == true ]]; then
         git status --short >&2
         exit 1
     fi
-    if git rev-parse "$TAG" >/dev/null 2>&1; then
-        echo "error: tag $TAG already exists" >&2
+    # Hard stop only if a release already exists; tag-only state is recoverable.
+    if gh release view "$TAG" >/dev/null 2>&1; then
+        echo "error: GitHub release $TAG already exists" >&2
         exit 1
     fi
 fi
@@ -302,9 +303,18 @@ ls -lh "$DMG_PATH"
 
 if [[ "$PUBLISH" == true ]]; then
     echo
-    echo "==> Tagging $TAG"
-    git tag -a "$TAG" -m "Tock $VERSION"
-    git push origin "$TAG"
+    if git rev-parse "$TAG" >/dev/null 2>&1; then
+        echo "==> Tag $TAG already exists locally — skipping create"
+    else
+        echo "==> Tagging $TAG"
+        git tag -a "$TAG" -m "Tock $VERSION"
+    fi
+
+    if git ls-remote --tags origin "$TAG" 2>/dev/null | grep -q "refs/tags/$TAG"; then
+        echo "==> Tag $TAG already on origin — skipping push"
+    else
+        git push origin "$TAG"
+    fi
 
     echo "==> Creating GitHub release"
     RELEASE_ARGS=("$TAG" "$DMG_PATH" --title "Tock $VERSION")
@@ -313,7 +323,9 @@ if [[ "$PUBLISH" == true ]]; then
     else
         RELEASE_ARGS+=(--generate-notes)
     fi
-    RELEASE_ARGS+=("${EXTRA_GH_ARGS[@]}")
+    if [[ ${#EXTRA_GH_ARGS[@]} -gt 0 ]]; then
+        RELEASE_ARGS+=("${EXTRA_GH_ARGS[@]}")
+    fi
 
     gh release create "${RELEASE_ARGS[@]}"
 
