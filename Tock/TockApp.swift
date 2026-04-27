@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 @main
-struct pomodoro_claudeApp: App {
+struct TockApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
