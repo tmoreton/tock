@@ -143,11 +143,6 @@ if [[ "$PUBLISH" == true ]]; then
         git status --short >&2
         exit 1
     fi
-    # Hard stop only if a release already exists; tag-only state is recoverable.
-    if gh release view "$TAG" >/dev/null 2>&1; then
-        echo "error: GitHub release $TAG already exists" >&2
-        exit 1
-    fi
 fi
 
 # ---- Build -------------------------------------------------------------------
@@ -316,18 +311,25 @@ if [[ "$PUBLISH" == true ]]; then
         git push origin "$TAG"
     fi
 
-    echo "==> Creating GitHub release"
-    RELEASE_ARGS=("$TAG" "$DMG_PATH" --title "Tock $VERSION")
-    if [[ -n "$NOTES" ]]; then
-        RELEASE_ARGS+=(--notes "$NOTES")
+    if gh release view "$TAG" >/dev/null 2>&1; then
+        echo "==> Release $TAG exists — replacing DMG asset"
+        gh release upload "$TAG" "$DMG_PATH" --clobber
+        if [[ -n "$NOTES" ]]; then
+            gh release edit "$TAG" --notes "$NOTES"
+        fi
     else
-        RELEASE_ARGS+=(--generate-notes)
+        echo "==> Creating GitHub release"
+        RELEASE_ARGS=("$TAG" "$DMG_PATH" --title "Tock $VERSION")
+        if [[ -n "$NOTES" ]]; then
+            RELEASE_ARGS+=(--notes "$NOTES")
+        else
+            RELEASE_ARGS+=(--generate-notes)
+        fi
+        if [[ ${#EXTRA_GH_ARGS[@]} -gt 0 ]]; then
+            RELEASE_ARGS+=("${EXTRA_GH_ARGS[@]}")
+        fi
+        gh release create "${RELEASE_ARGS[@]}"
     fi
-    if [[ ${#EXTRA_GH_ARGS[@]} -gt 0 ]]; then
-        RELEASE_ARGS+=("${EXTRA_GH_ARGS[@]}")
-    fi
-
-    gh release create "${RELEASE_ARGS[@]}"
 
     echo
     echo "==> Released $TAG"
