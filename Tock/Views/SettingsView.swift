@@ -28,21 +28,12 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Section("Sound") {
+            Section("General") {
                 Toggle("Play sound on completion", isOn: $playSoundOnComplete)
-            }
-
-            Section {
                 Toggle("Launch at login", isOn: Binding(
                     get: { launchAtLogin.isEnabled },
                     set: { launchAtLogin.setEnabled($0) }
                 ))
-            } header: {
-                Text("Startup")
-            } footer: {
-                Text("Tock will start automatically when you log in to your Mac.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
 
             Section {
@@ -71,7 +62,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 480)
+        .frame(width: 420, height: 420)
         .onAppear { launchAtLogin.refresh() }
     }
 }
